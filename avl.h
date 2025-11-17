@@ -18,6 +18,7 @@ typedef struct arvoreAVL{
 
 // Operações de criação e visualização da arvore AVL
 arvoreAVL *criaArv();
+void destroiAVL(node *a);
 int vaziaArv(arvoreAVL *a);
 node *criaNo(int valor);
 int altura(node* no, arvoreAVL *a);
@@ -36,6 +37,9 @@ node* rdd(node* no, arvoreAVL *a);
 
 // Operações de adição e remoção
 node* adiciona(node *no, int valor, arvoreAVL *a);
+node* remover(node *no, int chave, arvoreAVL *a);
 //
+
+void printArvore(node *no, int nivel, arvoreAVL *a);
 
 #endif
