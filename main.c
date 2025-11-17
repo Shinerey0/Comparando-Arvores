@@ -1,9 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include "avl.h" // Arrumar a altura da AVL, tá ineficiente por ser recursiva, o ideal é usar o campo das struct (tinha feito que nem o professor)
+#include "avl.h" 
 
-#define MAX 100 // DEMORA MUITO, DEIXAR AVL MAIS EFICIENTE (ALTURA, ETC)
+// Arrumar a altura da AVL, tá ineficiente por ser recursiva, o ideal é usar o campo das struct (tinha feito que nem o professor)
+// OBS: O teste para mais de 100 valores DEMORA MUITO, tem que dar uma olhada na otimização ou ver se é assim mesmo
+// O meu código da AVL não está otimizado, fiz com base nos slides do professor e pode ter erros
+
+#define MAX 100
 //#include "testes.h" --> e colocar todas funções lá
 
 
