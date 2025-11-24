@@ -3,13 +3,13 @@
 ## Para rodar faça no terminal:
 
 ### (Linux) 
-gcc main.c avl.c -o main 
+gcc main.c avl.c rb.c -o main 
 
 E em seguida:
 ./main
 
 ### (Windows)
-gcc main.c avl.c -o main.exe
+gcc main.c avl.c rb.c -o main.exe
 
 E em seguida:
 main.exe
