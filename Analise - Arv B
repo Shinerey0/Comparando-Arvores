@@ -1,0 +1,486 @@
+/*
+Estudo comparativo entre estruturas de dados. 
+Árvore B - Análise de desempenho nas operações de inserção e remoção
+Considerando ordens: 1, 5 e 10
+Tamanhos de conjunto: 1 a 10000
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+
+typedef struct no {
+    int total;
+    int* chaves;
+    struct no** filhos;
+    struct no* pai;
+} No;
+
+typedef struct arvoreB {
+    No* raiz;
+    int ordem;
+} ArvoreB;
+
+// Variáveis globais para contagem de operações
+long long contadorOperacoes = 0;
+
+// Declarações antecipadas
+No* criaNo(ArvoreB* arvore);
+void removeChaveRecursivo(ArvoreB* arvore, No* no, int chave);
+void adicionaChaveRecursivo(ArvoreB* arvore, No* no, No* novo, int chave);
+
+// Funções de criação
+ArvoreB* criaArvore(int ordem) {
+    ArvoreB* a = malloc(sizeof(ArvoreB));
+    a->ordem = ordem;
+    a->raiz = criaNo(a);
+    return a;
+}
+
+No* criaNo(ArvoreB* arvore) {
+    int max = arvore->ordem * 2;
+    No* no = malloc(sizeof(No));
+    no->pai = NULL;
+    no->chaves = malloc(sizeof(int) * (max + 1));
+    no->filhos = malloc(sizeof(No*) * (max + 2));
+    no->total = 0;
+    for (int i = 0; i < max + 2; i++)
+        no->filhos[i] = NULL;
+    return no;
+}
+
+// Funções de busca
+int pesquisaBinaria(No* no, int chave) {
+    int inicio = 0, fim = no->total - 1, meio;
+    while (inicio <= fim) {
+        contadorOperacoes++;
+        meio = (inicio + fim) / 2;
+        if (no->chaves[meio] == chave) {
+            return meio;
+        } else if (no->chaves[meio] > chave) {
+            fim = meio - 1;
+        } else {
+            inicio = meio + 1;
+        }
+    }
+    return inicio;
+}
+
+No* localizaNo(ArvoreB* arvore, int chave) {
+    No *no = arvore->raiz;
+    while (no != NULL) {
+        contadorOperacoes++;
+        int i = pesquisaBinaria(no, chave);
+        if (no->filhos[i] == NULL)
+            return no;
+        else
+            no = no->filhos[i];
+    }
+    return NULL;
+}
+
+int localizaChave(ArvoreB* arvore, int chave) {
+    No *no = arvore->raiz;
+    while (no != NULL) {
+        contadorOperacoes++;
+        int i = pesquisaBinaria(no, chave);
+        if (i < no->total && no->chaves[i] == chave) {
+            return 1;
+        } else {
+            no = no->filhos[i];
+        }
+    }
+    return 0;
+}
+
+// Funções de inserção
+void adicionaChaveNo(No* no, No* direita, int chave) {
+    int i = pesquisaBinaria(no, chave);
+    for (int j = no->total - 1; j >= i; j--) {
+        contadorOperacoes++;
+        no->chaves[j + 1] = no->chaves[j];
+        no->filhos[j + 2] = no->filhos[j + 1];
+    }
+    no->chaves[i] = chave;
+    no->filhos[i + 1] = direita;
+    no->total++;
+}
+
+int transbordo(ArvoreB *arvore, No *no) {
+    return no->total > arvore->ordem * 2;
+}
+
+No* divideNo(ArvoreB* arvore, No* no) {
+    int meio = no->total / 2;
+    No* novo = criaNo(arvore);
+    novo->pai = no->pai;
+    for (int i = meio + 1; i < no->total; i++) {
+        contadorOperacoes++;
+        novo->filhos[novo->total] = no->filhos[i];
+        novo->chaves[novo->total] = no->chaves[i];
+        if (novo->filhos[novo->total] != NULL) 
+            novo->filhos[novo->total]->pai = novo;
+        novo->total++;
+    }
+    novo->filhos[novo->total] = no->filhos[no->total];
+    if (novo->filhos[novo->total] != NULL) 
+        novo->filhos[novo->total]->pai = novo;
+    no->total = meio;
+    return novo;
+}
+
+void adicionaChaveRecursivo(ArvoreB* arvore, No* no, No* novo, int chave);
+
+void adicionaChave(ArvoreB* arvore, int chave) {
+    No* no = localizaNo(arvore, chave);
+    adicionaChaveRecursivo(arvore, no, NULL, chave);
+}
+
+void adicionaChaveRecursivo(ArvoreB* arvore, No* no, No* novo, int chave) {
+    contadorOperacoes++;
+    adicionaChaveNo(no, novo, chave);
+    if (transbordo(arvore, no)) {
+        int promovido = no->chaves[arvore->ordem];
+        No* novo = divideNo(arvore, no);
+        if (no->pai == NULL) {
+            No* raiz = criaNo(arvore);
+            raiz->filhos[0] = no;
+            adicionaChaveNo(raiz, novo, promovido);
+            no->pai = raiz;
+            novo->pai = raiz;
+            arvore->raiz = raiz;
+        } else {
+            adicionaChaveRecursivo(arvore, no->pai, novo, promovido);
+        }
+    }
+}
+
+// Funções auxiliares para remoção
+int ehFolha(No* no) {
+    return no->filhos[0] == NULL;
+}
+
+int getPredecessor(No* no, int idx) {
+    No* atual = no->filhos[idx];
+    while (!ehFolha(atual))
+        atual = atual->filhos[atual->total];
+    return atual->chaves[atual->total - 1];
+}
+
+int getSucessor(No* no, int idx) {
+    No* atual = no->filhos[idx + 1];
+    while (!ehFolha(atual))
+        atual = atual->filhos[0];
+    return atual->chaves[0];
+}
+
+void preenche(ArvoreB* arvore, No* no, int idx);
+void pegaDoAnterior(No* no, int idx);
+void pegaDoProximo(No* no, int idx);
+void merge(ArvoreB* arvore, No* no, int idx);
+
+void removeDeNo(No* no, int idx) {
+    for (int i = idx + 1; i < no->total; i++) {
+        contadorOperacoes++;
+        no->chaves[i - 1] = no->chaves[i];
+    }
+    no->total--;
+}
+
+void removeDeFolha(No* no, int idx) {
+    removeDeNo(no, idx);
+}
+
+void removeDeNaoFolha(ArvoreB* arvore, No* no, int idx) {
+    int chave = no->chaves[idx];
+    
+    if (no->filhos[idx]->total >= arvore->ordem) {
+        int pred = getPredecessor(no, idx);
+        no->chaves[idx] = pred;
+        removeChaveRecursivo(arvore, no->filhos[idx], pred);
+    } else if (no->filhos[idx + 1]->total >= arvore->ordem) {
+        int succ = getSucessor(no, idx);
+        no->chaves[idx] = succ;
+        removeChaveRecursivo(arvore, no->filhos[idx + 1], succ);
+    } else {
+        merge(arvore, no, idx);
+        removeChaveRecursivo(arvore, no->filhos[idx], chave);
+    }
+}
+
+void pegaDoAnterior(No* no, int idx) {
+    No* filho = no->filhos[idx];
+    No* irmao = no->filhos[idx - 1];
+    
+    for (int i = filho->total - 1; i >= 0; i--) {
+        filho->chaves[i + 1] = filho->chaves[i];
+    }
+    
+    if (!ehFolha(filho)) {
+        for (int i = filho->total; i >= 0; i--) {
+            filho->filhos[i + 1] = filho->filhos[i];
+        }
+    }
+    
+    filho->chaves[0] = no->chaves[idx - 1];
+    
+    if (!ehFolha(filho)) {
+        filho->filhos[0] = irmao->filhos[irmao->total];
+    }
+    
+    no->chaves[idx - 1] = irmao->chaves[irmao->total - 1];
+    filho->total++;
+    irmao->total--;
+}
+
+void pegaDoProximo(No* no, int idx) {
+    No* filho = no->filhos[idx];
+    No* irmao = no->filhos[idx + 1];
+    
+    filho->chaves[filho->total] = no->chaves[idx];
+    
+    if (!ehFolha(filho)) {
+        filho->filhos[filho->total + 1] = irmao->filhos[0];
+    }
+    
+    no->chaves[idx] = irmao->chaves[0];
+    
+    for (int i = 1; i < irmao->total; i++) {
+        irmao->chaves[i - 1] = irmao->chaves[i];
+    }
+    
+    if (!ehFolha(irmao)) {
+        for (int i = 1; i <= irmao->total; i++) {
+            irmao->filhos[i - 1] = irmao->filhos[i];
+        }
+    }
+    
+    filho->total++;
+    irmao->total--;
+}
+
+void merge(ArvoreB* arvore, No* no, int idx) {
+    No* filho = no->filhos[idx];
+    No* irmao = no->filhos[idx + 1];
+    
+    filho->chaves[arvore->ordem - 1] = no->chaves[idx];
+    
+    for (int i = 0; i < irmao->total; i++) {
+        filho->chaves[i + arvore->ordem] = irmao->chaves[i];
+    }
+    
+    if (!ehFolha(filho)) {
+        for (int i = 0; i <= irmao->total; i++) {
+            filho->filhos[i + arvore->ordem] = irmao->filhos[i];
+        }
+    }
+    
+    for (int i = idx + 1; i < no->total; i++) {
+        no->chaves[i - 1] = no->chaves[i];
+    }
+    
+    for (int i = idx + 2; i <= no->total; i++) {
+        no->filhos[i - 1] = no->filhos[i];
+    }
+    
+    filho->total += irmao->total + 1;
+    no->total--;
+    
+    free(irmao);
+}
+
+void preenche(ArvoreB* arvore, No* no, int idx) {
+    if (idx != 0 && no->filhos[idx - 1]->total >= arvore->ordem) {
+        pegaDoAnterior(no, idx);
+    } else if (idx != no->total && no->filhos[idx + 1]->total >= arvore->ordem) {
+        pegaDoProximo(no, idx);
+    } else {
+        if (idx != no->total) {
+            merge(arvore, no, idx);
+        } else {
+            merge(arvore, no, idx - 1);
+        }
+    }
+}
+
+void removeChaveRecursivo(ArvoreB* arvore, No* no, int chave) {
+    contadorOperacoes++;
+    int idx = pesquisaBinaria(no, chave);
+    
+    if (idx < no->total && no->chaves[idx] == chave) {
+        if (ehFolha(no)) {
+            removeDeFolha(no, idx);
+        } else {
+            removeDeNaoFolha(arvore, no, idx);
+        }
+    } else {
+        if (ehFolha(no)) {
+            return;
+        }
+        
+        int flag = (idx == no->total);
+        
+        if (no->filhos[idx]->total < arvore->ordem) {
+            preenche(arvore, no, idx);
+        }
+        
+        if (flag && idx > no->total) {
+            removeChaveRecursivo(arvore, no->filhos[idx - 1], chave);
+        } else {
+            removeChaveRecursivo(arvore, no->filhos[idx], chave);
+        }
+    }
+}
+
+void removeChave(ArvoreB* arvore, int chave) {
+    if (arvore->raiz == NULL) return;
+    
+    removeChaveRecursivo(arvore, arvore->raiz, chave);
+    
+    if (arvore->raiz->total == 0) {
+        No* tmp = arvore->raiz;
+        if (ehFolha(arvore->raiz)) {
+            arvore->raiz = NULL;
+        } else {
+            arvore->raiz = arvore->raiz->filhos[0];
+        }
+        free(tmp);
+    }
+}
+
+// Função para liberar memória
+void liberaNo(No* no) {
+    if (no != NULL) {
+        if (!ehFolha(no)) {
+            for (int i = 0; i <= no->total; i++) {
+                liberaNo(no->filhos[i]);
+            }
+        }
+        free(no->chaves);
+        free(no->filhos);
+        free(no);
+    }
+}
+
+void liberaArvore(ArvoreB* arvore) {
+    liberaNo(arvore->raiz);
+    free(arvore);
+}
+
+// Funções de teste e análise
+void geraChavesAleatorias(int* chaves, int n) {
+    for (int i = 0; i < n; i++) {
+        chaves[i] = rand() % (n * 10);
+    }
+}
+
+void testaInsercao(int ordem, int tamanho, double* tempoMedio, double* operacoesMedio) {
+    const int NUM_AMOSTRAS = 10;
+    double tempoTotal = 0;
+    long long operacoesTotal = 0;
+    
+    for (int amostra = 0; amostra < NUM_AMOSTRAS; amostra++) {
+        int* chaves = malloc(sizeof(int) * tamanho);
+        geraChavesAleatorias(chaves, tamanho);
+        
+        ArvoreB* arvore = criaArvore(ordem);
+        contadorOperacoes = 0;
+        
+        clock_t inicio = clock();
+        for (int i = 0; i < tamanho; i++) {
+            adicionaChave(arvore, chaves[i]);
+        }
+        clock_t fim = clock();
+        
+        tempoTotal += (double)(fim - inicio) / CLOCKS_PER_SEC;
+        operacoesTotal += contadorOperacoes;
+        
+        liberaArvore(arvore);
+        free(chaves);
+    }
+    
+    *tempoMedio = tempoTotal / NUM_AMOSTRAS;
+    *operacoesMedio = (double)operacoesTotal / NUM_AMOSTRAS;
+}
+
+void testaRemocao(int ordem, int tamanho, double* tempoMedio, double* operacoesMedio) {
+    const int NUM_AMOSTRAS = 10;
+    double tempoTotal = 0;
+    long long operacoesTotal = 0;
+    
+    for (int amostra = 0; amostra < NUM_AMOSTRAS; amostra++) {
+        int* chaves = malloc(sizeof(int) * tamanho);
+        geraChavesAleatorias(chaves, tamanho);
+        
+        // Primeiro insere todos os elementos
+        ArvoreB* arvore = criaArvore(ordem);
+        for (int i = 0; i < tamanho; i++) {
+            adicionaChave(arvore, chaves[i]);
+        }
+        
+        // Embaralha as chaves para remover em ordem diferente
+        for (int i = tamanho - 1; i > 0; i--) {
+            int j = rand() % (i + 1);
+            int temp = chaves[i];
+            chaves[i] = chaves[j];
+            chaves[j] = temp;
+        }
+        
+        contadorOperacoes = 0;
+        clock_t inicio = clock();
+        for (int i = 0; i < tamanho / 2; i++) {
+            removeChave(arvore, chaves[i]);
+        }
+        clock_t fim = clock();
+        
+        tempoTotal += (double)(fim - inicio) / CLOCKS_PER_SEC;
+        operacoesTotal += contadorOperacoes;
+        
+        liberaArvore(arvore);
+        free(chaves);
+    }
+    
+    *tempoMedio = tempoTotal / NUM_AMOSTRAS;
+    *operacoesMedio = (double)operacoesTotal / NUM_AMOSTRAS;
+}
+
+int main() {
+    srand(time(NULL));
+    
+    int ordens[] = {1, 5, 10};
+    int tamanhos[] = {100, 500, 1000, 2500, 5000, 7500, 10000};
+    
+    printf("=== ANÁLISE DE COMPLEXIDADE - ÁRVORE B ===\n\n");
+    
+    // Testa inserção
+    printf("INSERÇÃO:\n");
+    printf("%-10s %-10s %-15s %-20s\n", "Ordem", "Tamanho", "Tempo (s)", "Operações");
+    printf("--------------------------------------------------------------\n");
+    
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 7; j++) {
+            double tempo, operacoes;
+            testaInsercao(ordens[i], tamanhos[j], &tempo, &operacoes);
+            printf("%-10d %-10d %-15.6f %-20.0f\n", 
+                   ordens[i], tamanhos[j], tempo, operacoes);
+        }
+        printf("\n");
+    }
+    
+    // Testa remoção
+    printf("\nREMOÇÃO:\n");
+    printf("%-10s %-10s %-15s %-20s\n", "Ordem", "Tamanho", "Tempo (s)", "Operações");
+    printf("--------------------------------------------------------------\n");
+    
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 7; j++) {
+            double tempo, operacoes;
+            testaRemocao(ordens[i], tamanhos[j], &tempo, &operacoes);
+            printf("%-10d %-10d %-15.6f %-20.0f\n", 
+                   ordens[i], tamanhos[j], tempo, operacoes);
+        }
+        printf("\n");
+    }
+    
+    return 0;
+}
