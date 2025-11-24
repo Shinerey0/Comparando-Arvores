@@ -1,11 +1,25 @@
-#include "avl.h"
+
 #include "arvores.h"
 #include <stdlib.h>
 #include <stdio.h>
 
+typedef enum { INSERCAO, REMOCAO } Operacao;
 long custo_insercao = 0;   // DEFINIÇÃO
 long custo_remocao = 0;    // DEFINIÇÃO
 Operacao operacao_atual;   // DEFINIÇÃO
+
+
+typedef struct node{
+    struct node* pai;
+    struct node* esq;
+    struct node* dir;
+    int altura;
+    int valor;
+} node;
+
+typedef struct arvoreAVL{
+    struct node* raiz;
+} arvoreAVL;
 
 /* CONTABILIZAÇÕES:
 Comparações
@@ -14,6 +28,15 @@ Operações de rotação (um custo só)
 Não estou contabilizando:
 Acesso a nós 
 */
+
+int maior(int a, int b){
+
+    if(a>b){
+        return a;
+    } else{
+        return b;
+    }
+}
 
 void contaCusto(int vezes) {
     if (operacao_atual == INSERCAO)
@@ -59,13 +82,7 @@ node *criaNo(int valor){
 }
 
 
-// Cálculo do fator de balanceamento
-int fb(node* no) {
-    if (no == NULL){
-        return 0;
-    }
-    return getAltura(no->esq) - getAltura(no->dir);
-}
+
 
 // Função para pegar a altura de um nó pela struct
 int getAltura(node* no){
@@ -87,6 +104,13 @@ void atualizarAltura(node* no){
 
 }
 
+// Cálculo do fator de balanceamento
+int fb(node* no) {
+    if (no == NULL){
+        return 0;
+    }
+    return getAltura(no->esq) - getAltura(no->dir);
+}
 node* rse(node* no){
     contaCusto(1);
     node* pai = no->pai; // salvando o pai do nó que ira ser rotacionado
@@ -282,14 +306,7 @@ node* remover(node *no, int chave){
 }
 
 
-int maior(int a, int b){
 
-    if(a>b){
-        return a;
-    } else{
-        return b;
-    }
-}
 
 // FUNÇÕES GENÉRICAS =================|
 Resultados avl_obter_resultados() {
@@ -336,21 +353,4 @@ OperacoesArvore obter_operacoes_avl() {
     ops.obter_resultados = avl_obter_resultados;
     ops.resetar = avl_resetar_resultados;
     return ops;
-}
-
-
-void printArvore(node *no, int nivel, arvoreAVL *a){ // so pra visualizar, nao fiz essa funcao
-    if(no == NULL){
-        return;
-    }
-
-    printArvore(no->dir, nivel + 1, a);
-
-    for(int i = 0; i < nivel; i++){
-        printf("     ");
-    }
-
-    printf("%d(%d)\n", no->valor, fb(no));
-
-    printArvore(no->esq, nivel + 1, a);
 }

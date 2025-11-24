@@ -1,36 +1,76 @@
 import matplotlib.pyplot as plt
 import csv
+import os
 
-# Arquivo gerado pelo código em C
-ARQUIVO = "AVL_remocao.csv"
+# Arvores que serao comparadas
+ARVORES = ["AVL", "RN", "B1", "B5", "B10"]
 
-# Listas para armazenar os dados
-N = []
-CUSTO = []
+# Operacoes que serao mostradas
+OPERACOES = ["insercao", "remocao"]
 
-# Ler o arquivo CSV
-with open(ARQUIVO, "r") as f:
-    leitor = csv.reader(f)
-    next(leitor)  # pular cabeçalho
+# Pasta onde estão os arquivos CSV (ou "" se estiverem no mesmo diretório)
+PASTA = ""
 
-    for linha in leitor:
-        n = int(linha[0])
-        custo = float(linha[1])
 
-        N.append(n)
-        CUSTO.append(custo)
+def ler_csv(caminho):
+    # Lê um CSV no formato N,Custo e retorna listas N e custo
+    N, Custo = [], []
+    with open(caminho, "r") as f:
+        leitor = csv.reader(f)
+        next(leitor)  # pula cabeçalho
+        for linha in leitor:
+            N.append(int(linha[0]))
+            Custo.append(float(linha[1]))
+    return N, Custo
 
-# Criar gráfico
-plt.figure(figsize=(10, 6))
-plt.plot(N, CUSTO, linewidth=1)
 
-plt.title("Custo Médio de Inserção - Árvore AVL")
+# --------------------------
+#   GRÁFICO DE INSERÇÃO
+# --------------------------
+plt.figure(figsize=(12, 7))
+
+for arvore in ARVORES:
+    nome_arquivo = f"{arvore}_insercao.csv"
+    caminho = os.path.join(PASTA, nome_arquivo)
+
+    if not os.path.exists(caminho):
+        print(f"[AVISO] Arquivo não encontrado: {nome_arquivo}")
+        continue
+
+    N, custo = ler_csv(caminho)
+    plt.plot(N, custo, linewidth=1, label=arvore)
+
+plt.title("Comparação de Custo Médio — Inserção")
 plt.xlabel("Tamanho do conjunto de dados (N)")
-plt.ylabel("Esforço computacional (custo_insercao)")
+plt.ylabel("Esforço computacional (custo)")
 plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.savefig("comparacao_insercao.png", dpi=300)
+plt.show(block=False) # pra mostrar 2 imagens ao mesmo tempo
 
-# Salvar figura
-plt.savefig("grafico_avl_insercao.png", dpi=300)
 
-# Exibir figura
-plt.show()
+# --------------------------
+#   GRÁFICO DE REMOÇÃO
+# --------------------------
+plt.figure(figsize=(12, 7))
+
+for arvore in ARVORES:
+    nome_arquivo = f"{arvore}_remocao.csv"
+    caminho = os.path.join(PASTA, nome_arquivo)
+
+    if not os.path.exists(caminho):
+        print(f"[AVISO] Arquivo não encontrado: {nome_arquivo}")
+        continue
+
+    N, custo = ler_csv(caminho)
+    plt.plot(N, custo, linewidth=1, label=arvore)
+
+plt.title("Comparação de Custo Médio — Remoção")
+plt.xlabel("Tamanho do conjunto de dados (N)")
+plt.ylabel("Esforço computacional (custo)")
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.savefig("comparacao_remocao.png", dpi=300)
+plt.show() 

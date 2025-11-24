@@ -17,10 +17,15 @@ int main() {
     // AVL
     testes(obter_operacoes_avl(), "AVL");
 
-    // 
-    // testes(obter_operacoes_rn(),"RN");
+    //  Rubro Negra
+    testes(obter_operacoes_rn(),"RN");
 
-    system("python plot.py");
+    #ifdef _WIN32
+        system("python plot.py");
+    #else
+        system("python3 plot.py");
+    #endif
+    
     return 0;
 }
 
@@ -39,6 +44,8 @@ void testes(OperacoesArvore ops, const char *arquivo_saida_base) {
     fprintf(f_rem, "N,CustoRemocao\n");
 
     int dados[MAX_N];
+
+    printf("\nTestando: %s\n", arquivo_saida_base);
 
     for (int n = 1; n <= MAX_N; n++) {
 

@@ -6,7 +6,7 @@ typedef struct {
     long custo_remocao;
 } Resultados;
 
-typedef struct {
+typedef struct { // tipo void* para receber qualquer tipo de arvore 
     void* (*criar)();
     void  (*destruir)(void*);
     void  (*inserir)(void*, int);
@@ -15,7 +15,7 @@ typedef struct {
     void (*resetar)();
 } OperacoesArvore;
 
-// Funções que cada implementação deve fornecer
+// Funções que cada implementação deve fornecer, cada elemento da struct definido com a função ESPECÍFICA da arvore
 OperacoesArvore obter_operacoes_avl();
 OperacoesArvore obter_operacoes_rn();
 OperacoesArvore obter_operacoes_b1();
