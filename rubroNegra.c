@@ -21,11 +21,11 @@ long long excluidos;
 
 // Função para criar um novo nó
 No* criarNo(int valor) {
-    No* No = (No*)malloc(sizeof(No));
-    No->valor = valor;
-    No->cor = RED;
-    No->esq = No->dir = No->pai = NIL;
-    return No;
+    No* novo = (No*)malloc(sizeof(No));
+    novo->valor = valor;
+    novo->cor = RED;
+    novo->esq = novo->dir = novo->pai = NIL;
+    return novo;
 }
 
 // Inicializar NIL
