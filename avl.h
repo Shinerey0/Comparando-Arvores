@@ -12,8 +12,6 @@ typedef struct node{
 
 typedef struct arvoreAVL{
     struct node* raiz;
-    int tamanho;
-    long comparacoes;
 } arvoreAVL;
 
 // Operações de criação e visualização da arvore AVL
@@ -21,24 +19,38 @@ arvoreAVL *criaArv();
 void destroiAVL(node *a);
 int vaziaArv(arvoreAVL *a);
 node *criaNo(int valor);
-int altura(node* no, arvoreAVL *a);
+int getAltura(node* no);
+void atualizarAltura(node* no);
 int maior(int a, int b);
-int fb(node *no, arvoreAVL *a);
+
+int fb(node *no);
 void preOrder(node *no);
-long getComparacoesAVL(arvoreAVL *a);
+void printArvore(node *no, int nivel, arvoreAVL *a);
 //
 
 // Operações de rotação 
-node* rse(node* no, arvoreAVL *a);
-node* rsd(node* no, arvoreAVL *a);
-node* rde(node* no, arvoreAVL *a);
-node* rdd(node* no, arvoreAVL *a);
+node* rse(node* no);
+node* rsd(node* no);
+node* rde(node* no);
+node* rdd(node* no);
 //
 
 // Operações de adição e remoção
-node* adiciona(node *no, int valor, arvoreAVL *a);
-node* remover(node *no, int chave, arvoreAVL *a);
+node* adiciona(node *no, int valor);
+node* remover(node *no, int chave);
 //
+
+// Funções de Custo
+// DECLARAR VARIÁVEIS GLOBAIS PARA CUSTO 
+extern long custo_insercao;
+extern long custo_remocao;
+
+// Declara o enum e a variável global 
+typedef enum { INSERCAO, REMOCAO } Operacao;
+extern Operacao operacao_atual;
+
+// Declara a função que incrementa o custo */
+void contaCusto(int vezes);
 
 void printArvore(node *no, int nivel, arvoreAVL *a);
 
