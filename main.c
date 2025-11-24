@@ -1,115 +1,97 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include "avl.h" 
+#include <string.h>
+#include "arvores.h"
 
-// Arrumar a altura da AVL, tá ineficiente por ser recursiva, o ideal é usar o campo das struct (tinha feito que nem o professor)
-// OBS: O teste para mais de 100 valores DEMORA MUITO, tem que dar uma olhada na otimização ou ver se é assim mesmo
-// O meu código da AVL não está otimizado, fiz com base nos slides do professor e pode ter erros
+#define MAX_N 4000
+#define AMOSTRAS 10
 
-#define MAX 100
-//#include "testes.h" --> e colocar todas funções lá
-
+void testes(OperacoesArvore ops, const char *output);
 
 
-// ======== PARTE DE TESTES
-int* gerarDados(){
-
-    int *vetorDados = malloc(sizeof(int) * MAX);
-    for(int i = 0; i < MAX; i++){
-        vetorDados[i] = rand(); // não sei se precisa limitar ou só ser aleatorios total msm
-    }
-
-    return vetorDados;
-}
-
-void media(int *v, int n, int reps){
-    for(int i = 0; i < n; i++){
-        v[i] = v[i] / reps;
-    }
-}
-
-
-int* vetorTestesMedioADD(){
-
-    int *vetorTestesADD = malloc(sizeof(int) * MAX);
-    for(int i = 0; i < MAX; i++) vetorTestesADD[i] = 0; // inicializando o vetor, armazena as qtds de comparacoes de cada i, de 1 até 10k
-    int reps;
-
-    for(reps = 0; reps < 10; reps++){
-  
-        int *valores = gerarDados();
-
-        // Para cada K de 1 até MAX (cada quantidade de valores dos testes), ou seja, de 1 até 10 mil
-        for(int k = 1; k <= MAX; k++){
-
-            arvoreAVL *a = criaArv();
-
-            // teste para os primeiros K valores
-            for(int j = 0; j < k; j++){
-                        a->raiz = adiciona(a->raiz, valores[j], a);
-                }
-
-                vetorTestesADD[k-1] += a->comparacoes;
-
-            destroiAVL(a->raiz); // liberando espaço pra proxima arvore com k valores
-            free(a);
-
-        }
-
-        free(valores); // liberando espaço pros novos 10 mil
-    }
-
-    media(vetorTestesADD, MAX, reps);
-
-    return vetorTestesADD;
-}
-
-void salvarArq(const char *arq, int *vetor){
-    FILE *f;
-    f = fopen(arq, "w");
-
-    if(f == NULL){
-        printf("\nErro ao criar o arquivo!\n");
-    }
-
-    fprintf(f, "tamanho n com k comparacoes\n");
-    for(int i = 0; i < MAX; i++){
-        fprintf(f,"%d\n", vetor[i]);
-    }
-
-    fclose(f);
-}
-// ======== PARTE DE TESTES
-
-
-int main(){
+int main() {
 
     srand(time(NULL));
-    int *testesAVL = vetorTestesMedioADD();
-    salvarArq("avl_add.txt", testesAVL);
-    free(testesAVL);
 
+    // AVL
+    testes(obter_operacoes_avl(), "AVL");
 
-    /*
-    arvoreAVL *a = criaArv();
-    a->raiz = adiciona(a->raiz,4, a);
-    a->raiz = adiciona(a->raiz,2, a);
-    a->raiz = adiciona(a->raiz,1, a);
-    a->raiz = adiciona(a->raiz,3, a);
-    a->raiz = adiciona(a->raiz,8, a);
-    a->raiz = adiciona(a->raiz,9, a);
-    a->raiz = adiciona(a->raiz,6, a);
-    a->raiz = adiciona(a->raiz,5, a);
-    a->raiz = adiciona(a->raiz,7, a);
+    // 
+    // testes(obter_operacoes_rn(),"RN");
 
-    a->raiz = remover(a->raiz, 7, a);
-  
-    printf("\nArvore: ");
-    //preOrder(a->raiz);
-
-    printArvore(a->raiz, 0, a);
-    printf("\nComparacoes: %li\n", getComparacoesAVL(a));
-    */
+    system("python plot.py");
     return 0;
 }
+
+void testes(OperacoesArvore ops, const char *arquivo_saida_base) {
+
+    char arq_ins[256];
+    char arq_rem[256];
+
+    sprintf(arq_ins, "%s_insercao.csv", arquivo_saida_base); // salva uma string formatada em arq_ins, tava tentando usar strcat e dava erro
+    sprintf(arq_rem, "%s_remocao.csv",  arquivo_saida_base);
+
+    FILE *f_ins = fopen(arq_ins, "w");
+    FILE *f_rem = fopen(arq_rem, "w");
+
+    fprintf(f_ins, "N,CustoInsercao\n");
+    fprintf(f_rem, "N,CustoRemocao\n");
+
+    int dados[MAX_N];
+
+    for (int n = 1; n <= MAX_N; n++) {
+
+        double soma_ins = 0;
+        double soma_rem = 0;
+
+        for (int am = 0; am < AMOSTRAS; am++) {
+
+            // gera MAX_N dados aleatórios
+            for (int i = 0; i < n; i++)
+                dados[i] = rand();
+
+            void *arv = ops.criar();
+
+            // INSERIR n-1 elementos
+            for (int i = 0; i < n - 1; i++)
+                ops.inserir(arv, dados[i]);
+
+           
+            // INSERÇÃO DO ULTIMO
+        
+            ops.resetar();
+            ops.inserir(arv, dados[n - 1]);
+
+            Resultados r_ins = ops.obter_resultados();
+            soma_ins += r_ins.custo_insercao;
+
+          
+            // REMOÇÃO DO ULTIMO
+         
+            ops.resetar();
+            ops.remover(arv, dados[n - 1]);
+
+            Resultados r_rem = ops.obter_resultados();
+            soma_rem += r_rem.custo_remocao;
+
+            ops.destruir(arv);
+        }
+
+        double media_ins = soma_ins / AMOSTRAS;
+        double media_rem = soma_rem / AMOSTRAS;
+
+        fprintf(f_ins, "%d,%.2f\n", n, media_ins);
+        fprintf(f_rem, "%d,%.2f\n", n, media_rem);
+
+        if (n % 500 == 0)
+            printf("N=%d concluído\n", n);
+    }
+
+    fclose(f_ins);
+    fclose(f_rem);
+
+    printf("\nArquivos gerados:\n%s\n%s\n", arq_ins, arq_rem);
+}
+
+
