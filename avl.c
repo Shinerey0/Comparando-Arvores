@@ -112,12 +112,18 @@ int fb(node* no) {
     return getAltura(no->esq) - getAltura(no->dir);
 }
 node* rse(node* no){
-    contaCusto(1);
+    contaCusto(1); // Rotações contam custo (1 validação estrutural)
+
     node* pai = no->pai; // salvando o pai do nó que ira ser rotacionado
     node* direita = no->dir; // salvando a direita do no, que irá virar o NO atual
 
     no->dir = direita->esq; // o no da direita vai virar o da esquerda do no atual
     no->pai = direita; // o no pai deste atual vai virar o da direita
+
+    // CORREÇÃO AQUI: Atualizar o pai dessa subárvore que foi movida
+    if (no->dir != NULL) {
+        no->dir->pai = no;
+    }
 
     // substituição do nó da direita no lugar desse atual
     direita->esq = no;
@@ -132,13 +138,17 @@ node* rse(node* no){
 }
 
 node* rsd(node* no){ // mesma coisa agora com a esquerda
-    contaCusto(1);
+    contaCusto(1); // Rotações contam custo (1 validação estrutural)
     node* pai = no->pai;
     node* esquerda = no->esq;  
 
     no->esq = esquerda->dir;
     no->pai = esquerda; 
 
+    // CORREÇÃO AQUI: Atualizar o pai dessa subárvore que foi movida
+    if (no->esq != NULL) {
+        no->esq->pai = no;
+    }
     
     esquerda->dir = no;
     esquerda->pai = pai;
@@ -163,20 +173,21 @@ node* rdd(node *no){
 }
 
 node* adiciona(node* no, int valor) {
-
+    contaCusto(1);  // conta esse nivel atual
     if (no == NULL){
         return criaNo(valor);
     }
 
-
-    contaCusto(1);
     if (valor < no->valor){
+        
         no->esq = adiciona(no->esq, valor);
         no->esq->pai = no;
+    
     }
     else {
-        contaCusto(1);
+        
         if(valor > no->valor){
+            
             no->dir = adiciona(no->dir, valor);
             no->dir->pai = no; 
         } else{
@@ -184,25 +195,27 @@ node* adiciona(node* no, int valor) {
         }
     }
 
+    contaCusto(1); // VERIFICAR NECESSIDADE DE BALANCEAMENTO
     atualizarAltura(no);
+    //contaCusto(1); // altura
   
     if (fb(no) > 1 && fb(no->esq) >= 0){ 
-        contaCusto(2);
+    
         return rsd(no);
     }
 
     if (fb(no) < -1 && fb(no->dir) <= 0 ){
-        contaCusto(2);
+       
         return rse(no);
     }
 
     if (fb(no) > 1 && fb(no->dir) < 0 ){ // menor igual?
-        contaCusto(2);
+    
         return rdd(no);
     }
 
     if (fb(no) < -1 && fb(no->dir) > 0) { // maior igual?
-        contaCusto(2);
+    
         return rde(no);
     }
 
@@ -210,19 +223,20 @@ node* adiciona(node* no, int valor) {
 }
 
 node* remover(node *no, int chave){
-  
+    contaCusto(1); // avança nivel cada recursao
     if(no == NULL){
         printf("\nValor nao encontrado para remocao\n");
         return NULL;
     }
 
-    contaCusto(2);
     if(chave < no->valor){
+        
         no->esq = remover(no->esq, chave);
         if (no->esq != NULL) no->esq->pai = no; 
         
    
     } else if(chave > no->valor){
+        
         no->dir = remover(no->dir, chave);
         if (no->dir != NULL) no->dir->pai = no;
     
@@ -254,7 +268,7 @@ node* remover(node *no, int chave){
         // Caso eu pegue só o nó da esquerda, vai quebrar os valores
         node *temp = no->dir;
         while(temp->esq != NULL){
-            contaCusto(1);
+            contaCusto(1); // avança nível
             temp = temp->esq;
         }
     
@@ -265,38 +279,38 @@ node* remover(node *no, int chave){
         no->dir = remover(no->dir, temp->valor);
         if (no->dir != NULL){
             no->dir->pai = no; 
-            contaCusto(1);
         }
         
     }
 
         // se só tinha um nó
-        contaCusto(1);
         if(no == NULL){
             return NULL;
         }
 
         // atualizar altura do nó atual
         atualizarAltura(no);
-       
+        //contaCusto(1); // altura é necessário e especifico da AVL, validação
+
+        contaCusto(1); // VALIDAÇÃO DE BALANCEAMENTO
         // balancear
         if (fb(no) > 1 && fb(no->esq) >= 0){ 
-            contaCusto(2);
+            
             return rsd(no);
         }
 
         if (fb(no) < -1 && fb(no->dir) <= 0 ){
-            contaCusto(2);
+            
             return rse(no);
         }
 
         if (fb(no) > 1 && fb(no->dir) < 0 ){
-            contaCusto(2);
+          
             return rdd(no);
         }
 
         if (fb(no) < -1 && fb(no->dir) > 0) {
-            contaCusto(2);
+         
             return rde(no);
         }
 

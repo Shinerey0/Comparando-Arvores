@@ -57,7 +57,7 @@ void initNIL() {
 
 // prefixo rn_ nas funções de rotação
 void rn_esqRotate(No** raiz, No* x) {
-    rn_contaCusto(1); 
+    rn_contaCusto(1);  // Rotação conta como validação/ajuste estrutural
     No* y = x->dir;
     x->dir = y->esq;
     if (y->esq != NIL) y->esq->pai = x;
@@ -70,7 +70,7 @@ void rn_esqRotate(No** raiz, No* x) {
 }
 
 void rn_dirRotate(No** raiz, No* y) {
-    rn_contaCusto(1); 
+    rn_contaCusto(1);  // Rotação conta como validação/ajuste estrutural
     No* x = y->esq;
     y->esq = x->dir;
     if (x->dir != NIL) x->dir->pai = y;
@@ -85,6 +85,8 @@ void rn_dirRotate(No** raiz, No* y) {
 // prefixo rn_ na função
 void rn_corrigirInsercao(No** raiz, No* z) {
     while (z->pai->cor == RED) {
+        rn_contaCusto(1); // custo de validar a cor do pai
+
         if (z->pai == z->pai->pai->esq) {
             No* y = z->pai->pai->dir;
             if (y->cor == RED) {
@@ -124,15 +126,16 @@ void rn_corrigirInsercao(No** raiz, No* z) {
 
 // prefixo rn_ na função
 void rn_inserir(No** raiz, int valor) {
-    rn_contaCusto(1); 
     No* z = criarNo(valor);
     No* y = NIL;
     No* x = *raiz;
     while (x != NIL) {
-        rn_contaCusto(1); 
+        rn_contaCusto(1); // avança nivel
         y = x;
-        if (z->valor < x->valor) x = x->esq;
-        else x = x->dir;
+        if (z->valor < x->valor){
+        x = x->esq; 
+        
+        } else x = x->dir;
     }
     z->pai = y;
     if (y == NIL) *raiz = z;
@@ -157,7 +160,7 @@ void rn_transplant(No** raiz, No* u, No* v) {
 // prefixo rn_ na função
 No* rn_minimo(No* x) {
     while (x->esq != NIL) {
-        rn_contaCusto(1); 
+        rn_contaCusto(1); // avança nivel
         x = x->esq;
     }
     return x;
@@ -166,6 +169,7 @@ No* rn_minimo(No* x) {
 // prefixo rn_ na função
 void rn_corrigirRemocao(No** raiz, No* x) {
     while (x != *raiz && x->cor == BLACK) {
+        rn_contaCusto(1); // validação checar necessidade de ajuste
         if (x == x->pai->esq) {
             No* w = x->pai->dir;
             if (w->cor == RED) {
@@ -223,9 +227,11 @@ void rn_corrigirRemocao(No** raiz, No* x) {
 void rn_remover(No** raiz, int valor) {
     No* z = *raiz;
     while (z != NIL && z->valor != valor) {
-        rn_contaCusto(1); 
-        if (valor < z->valor) z = z->esq;
-        else z = z->dir;
+        rn_contaCusto(1); // avança nivel
+        if (valor < z->valor){
+            z = z->esq;
+            
+        } else z = z->dir;
     }
     if (z == NIL) return;
     No* y = z;

@@ -4,10 +4,11 @@
 #include <string.h>
 #include "arvores.h"
 
-#define MAX_N 4000
-#define AMOSTRAS 10
+#define MAX_N 10000
+#define AMOSTRAS 100
 
 void testes(OperacoesArvore ops, const char *output);
+
 
 
 int main() {
@@ -19,6 +20,16 @@ int main() {
 
     //  Rubro Negra
     testes(obter_operacoes_rn(),"RN");
+
+    // B-Tree Ordem 1
+    testes(obter_operacoes_b1(), "B1");
+
+    // B-Tree Ordem 5
+    testes(obter_operacoes_b5(), "B5");
+
+    // B-Tree Ordem 10
+    testes(obter_operacoes_b10(), "B10");
+    // ...
 
     #ifdef _WIN32
         system("python plot.py");
@@ -100,5 +111,3 @@ void testes(OperacoesArvore ops, const char *arquivo_saida_base) {
 
     printf("\nArquivos gerados:\n%s\n%s\n", arq_ins, arq_rem);
 }
-
-
