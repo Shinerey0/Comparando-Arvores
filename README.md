@@ -3,17 +3,18 @@
 ## Para rodar faça no terminal:
 
 ### (Linux) 
-gcc main.c avl.c rb.c -o main 
+gcc main.c avl.c rb.c b.c -o main 
 
 E em seguida:
 ./main
 
 ### (Windows)
-gcc main.c avl.c rb.c -o main.exe
+gcc main.c avl.c rb.c b.c -o main.exe
 
 E em seguida:
 main.exe
 
 
 Caso o projeto utilize outros arquivos .c (outras estruturas), eles deverão ser adicionados ao comando gcc também
+
 
