@@ -6,8 +6,8 @@
 #define AMOSTRAS 50
 
 typedef enum { INSERCAO, REMOCAO } Operacao;
-long custo_insercao = 0;   // DEFINIÇÃO
-long custo_remocao = 0;    // DEFINIÇÃO
+long b_custo_insercao = 0;   // DEFINIÇÃO
+long b_custo_remocao = 0;    // DEFINIÇÃO
 Operacao operacao_atual;   // DEFINIÇÃO
 
 void testes(OperacoesArvore ops, const char *output);
@@ -35,9 +35,9 @@ void adicionaChaveRecursivo(ArvoreB* arvore, No* no, No* novo, int chave);
 
 void contaCusto(int vezes) {
     if (operacao_atual == INSERCAO)
-        custo_insercao += vezes;
+        b_custo_insercao += vezes;
     else
-        custo_remocao += vezes;
+        b_custo_remocao += vezes;
 }
 
 
