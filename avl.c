@@ -1,13 +1,27 @@
-
 #include "arvores.h"
 #include <stdlib.h>
 #include <stdio.h>
 
+// Variáveis especiais para testes e contabilização!
 typedef enum { INSERCAO, REMOCAO } Operacao;
-long custo_insercao = 0;   // DEFINIÇÃO
-long custo_remocao = 0;    // DEFINIÇÃO
-Operacao operacao_atual;   // DEFINIÇÃO
+long custo_insercao = 0;  
+long custo_remocao = 0;   
+Operacao operacao_atual; 
 
+/*
+Para a implementação da árvore usamos, em grande parte, a base fornecida pelo professor durante as aulas.
+
+Novamente, consideramos para contabilização de esforço computacional:
+-Operações de balanceamento (rotações, splits, merges, redistribuições)
+-Movimentação entre níveis → +1 para cada descida/avanço de nó durante busca/inserção/remoção
+-Verificações se é necessário balanceamento ou não.
+
+Desta forma, na árvore AVL foram contabilizados:
+    Operações de rotação simples (à esquerda e à direita)
+    Avanços em níveis, como na recursão da inserção e remoção, busca de sucessores.
+    Verificações de balanceamento, como na verificação de necessidade de rotação a partir dos fatores de balanceamento
+
+*/
 
 typedef struct node{
     struct node* pai;
@@ -21,16 +35,7 @@ typedef struct arvoreAVL{
     struct node* raiz;
 } arvoreAVL;
 
-/* CONTABILIZAÇÕES:
-Comparações
-Operações de rotação (um custo só)
-
-Não estou contabilizando:
-Acesso a nós 
-*/
-
 int maior(int a, int b){
-
     if(a>b){
         return a;
     } else{
@@ -38,7 +43,7 @@ int maior(int a, int b){
     }
 }
 
-void contaCusto(int vezes) {
+void contaCusto(int vezes) { // FUNÇÃO RESPONSÁVEL PARA CONTABILIZAÇÃO! ELA SERÁ CHAMADA A CADA 'CUSTO' CONSIDERADO NA IMPLEMENTAÇÃO!
     if (operacao_atual == INSERCAO)
         custo_insercao += vezes;
     else
@@ -53,19 +58,16 @@ arvoreAVL* criaArv(){
 }
 
 void destroiAVL(node *a){
-
     if(a == NULL){
         return;
     }
-
     destroiAVL(a->esq);
     destroiAVL(a->dir);
-
     free(a);
 }
 
 int vaziaArv(arvoreAVL *a){
-return (a->raiz == NULL);
+    return (a->raiz == NULL);
 }
 
 node *criaNo(int valor){
@@ -74,17 +76,11 @@ node *criaNo(int valor){
     novo->pai = NULL;
     novo->esq = NULL;
     novo->dir = NULL;
-    
-    novo->altura = 1; // Vou usar 1 como altura base
+    novo->altura = 1;
     novo->valor = valor;
-    
     return novo;
 }
 
-
-
-
-// Função para pegar a altura de um nó pela struct
 int getAltura(node* no){
     if(no == NULL){
         return 0;
@@ -92,60 +88,51 @@ int getAltura(node* no){
     return no->altura;
 }
 
-// Atualizar altura de um nó
 void atualizarAltura(node* no){
-
     if(no == NULL){
         return;
     }
     int alturaEsq = getAltura(no->esq);
     int alturaDir = getAltura(no->dir);
     no->altura = maior(alturaEsq, alturaDir) + 1;
-
 }
 
-// Cálculo do fator de balanceamento
 int fb(node* no) {
     if (no == NULL){
         return 0;
     }
     return getAltura(no->esq) - getAltura(no->dir);
 }
+
 node* rse(node* no){
-    contaCusto(1); // Rotações contam custo (1 validação estrutural)
+    contaCusto(1); // conta custo, operação de balanceamento (rotação)
+    node* pai = no->pai;
+    node* direita = no->dir;
 
-    node* pai = no->pai; // salvando o pai do nó que ira ser rotacionado
-    node* direita = no->dir; // salvando a direita do no, que irá virar o NO atual
+    no->dir = direita->esq;
+    no->pai = direita;
 
-    no->dir = direita->esq; // o no da direita vai virar o da esquerda do no atual
-    no->pai = direita; // o no pai deste atual vai virar o da direita
-
-    // CORREÇÃO AQUI: Atualizar o pai dessa subárvore que foi movida
     if (no->dir != NULL) {
         no->dir->pai = no;
     }
 
-    // substituição do nó da direita no lugar desse atual
     direita->esq = no;
     direita->pai = pai;
 
-    // atualizar altura
     atualizarAltura(no);
     atualizarAltura(direita);
 
     return direita;
-
 }
 
-node* rsd(node* no){ // mesma coisa agora com a esquerda
-    contaCusto(1); // Rotações contam custo (1 validação estrutural)
+node* rsd(node* no){
+    contaCusto(1); // conta custo, operação de balanceamento (rotação)
     node* pai = no->pai;
     node* esquerda = no->esq;  
 
     no->esq = esquerda->dir;
-    no->pai = esquerda; 
+    no->pai = esquerda;
 
-    // CORREÇÃO AQUI: Atualizar o pai dessa subárvore que foi movida
     if (no->esq != NULL) {
         no->esq->pai = no;
     }
@@ -153,12 +140,10 @@ node* rsd(node* no){ // mesma coisa agora com a esquerda
     esquerda->dir = no;
     esquerda->pai = pai;
 
-    // atualizar altura
     atualizarAltura(no);
     atualizarAltura(esquerda);
 
     return esquerda;
-
 }
 
 node* rde(node* no){
@@ -168,54 +153,44 @@ node* rde(node* no){
 
 node* rdd(node *no){
     no->esq = rse(no->esq);
-
     return rsd(no);
 }
 
 node* adiciona(node* no, int valor) {
-    contaCusto(1);  // conta esse nivel atual
+    contaCusto(1);  // avanço de nível recursivo
+    
     if (no == NULL){
         return criaNo(valor);
     }
 
     if (valor < no->valor){
-        
         no->esq = adiciona(no->esq, valor);
         no->esq->pai = no;
-    
-    }
-    else {
-        
-        if(valor > no->valor){
-            
-            no->dir = adiciona(no->dir, valor);
-            no->dir->pai = no; 
-        } else{
-            return no; // se for igual
-        }
+    } else if(valor > no->valor){
+        no->dir = adiciona(no->dir, valor);
+        no->dir->pai = no; 
+    } else{
+        return no;
     }
 
-    contaCusto(1); // VERIFICAR NECESSIDADE DE BALANCEAMENTO
     atualizarAltura(no);
-    //contaCusto(1); // altura
-  
-    if (fb(no) > 1 && fb(no->esq) >= 0){ 
     
+   
+    // CONTABILIZAR VERIFICAÇÕES DE BALANCEAMENTO 
+    contaCusto(1); // uma verificação de balanceamento
+    if (fb(no) > 1 && fb(no->esq) >= 0){ 
         return rsd(no);
     }
-
+    contaCusto(1); // foram duas verificações
     if (fb(no) < -1 && fb(no->dir) <= 0 ){
-       
         return rse(no);
     }
-
-    if (fb(no) > 1 && fb(no->dir) < 0 ){ // menor igual?
-    
+    contaCusto(1); // foram tres verificações
+    if (fb(no) > 1 && fb(no->dir) < 0 ){
         return rdd(no);
     }
-
-    if (fb(no) < -1 && fb(no->dir) > 0) { // maior igual?
-    
+    contaCusto(1); // foram quatro verificações
+    if (fb(no) < -1 && fb(no->dir) > 0) {
         return rde(no);
     }
 
@@ -223,106 +198,81 @@ node* adiciona(node* no, int valor) {
 }
 
 node* remover(node *no, int chave){
-    contaCusto(1); // avança nivel cada recursao
+    contaCusto(1); // avanço de nível
+    
     if(no == NULL){
-        printf("\nValor nao encontrado para remocao\n");
+        //printf("\nValor nao encontrado para remocao\n");
         return NULL;
     }
 
     if(chave < no->valor){
-        
         no->esq = remover(no->esq, chave);
-        if (no->esq != NULL) no->esq->pai = no; 
-        
-   
+        if (no->esq != NULL) no->esq->pai = no;
     } else if(chave > no->valor){
-        
         no->dir = remover(no->dir, chave);
         if (no->dir != NULL) no->dir->pai = no;
-    
     } else{
         // Achou o nó
-
-        // CASO 1 DA REMOÇÃO, NO REMOVIDO NAO TENHA FILHOS
         if(no->esq == NULL && no->dir == NULL){
             free(no);
             return NULL;
         }
 
-        // CASO 2, NO REMOVIDO TEM UM FILHO
         if(no->esq == NULL){
-     
             no->dir->pai = no->pai;
             free(no);
             return no->dir;
         } 
         if(no->dir == NULL){
-           
             no->esq->pai = no->pai;
             free(no);
             return no->esq;
         }
 
-        // CASO 3, NO REMOVIDO TEM DOIS FILHOS
-        // Encontrar o sucessor, nesse caso menor sub arvore da direita, para nao quebrar a propridade de arvore binaria
-        // Caso eu pegue só o nó da esquerda, vai quebrar os valores
+        // CASO 3: DOIS FILHOS
         node *temp = no->dir;
         while(temp->esq != NULL){
-            contaCusto(1); // avança nível
+            contaCusto(1); // avanço de nível na busca do sucessor
             temp = temp->esq;
         }
-    
 
-        // colocando o sucessor no lugar desejado, copio o valor dele
         no->valor = temp->valor;
-        // removo o sucessor (ira cair no caso 1 ou 2, pq será o mais a esquerda)
         no->dir = remover(no->dir, temp->valor);
         if (no->dir != NULL){
             no->dir->pai = no; 
         }
-        
     }
 
-        // se só tinha um nó
-        if(no == NULL){
-            return NULL;
-        }
+    if(no == NULL){
+        return NULL;
+    }
 
-        // atualizar altura do nó atual
-        atualizarAltura(no);
-        //contaCusto(1); // altura é necessário e especifico da AVL, validação
+    atualizarAltura(no);
 
-        contaCusto(1); // VALIDAÇÃO DE BALANCEAMENTO
-        // balancear
-        if (fb(no) > 1 && fb(no->esq) >= 0){ 
-            
-            return rsd(no);
-        }
-
-        if (fb(no) < -1 && fb(no->dir) <= 0 ){
-            
-            return rse(no);
-        }
-
-        if (fb(no) > 1 && fb(no->dir) < 0 ){
-          
-            return rdd(no);
-        }
-
-        if (fb(no) < -1 && fb(no->dir) > 0) {
-         
-            return rde(no);
-        }
-
+    // CONTABILIZAR VERIFICAÇÕES DE BALANCEAMENTO 
+   
+    contaCusto(1); // uma verificação de balanceamento
+    if (fb(no) > 1 && fb(no->esq) >= 0){ 
+        return rsd(no);
+    }
+    contaCusto(1); // foram duas verificações
+    if (fb(no) < -1 && fb(no->dir) <= 0 ){
+        return rse(no);
+    }
+    contaCusto(1); // foram tres verificações
+    if (fb(no) > 1 && fb(no->dir) < 0 ){
+        return rdd(no);
+    }
+    contaCusto(1); // foram quatro verificações
+    if (fb(no) < -1 && fb(no->dir) > 0) {
+        return rde(no);
+    }
 
     return no;
-
 }
 
+// CRIAÇÃO DAS FUNÇÕES PARA ADAPTAÇÃO NA ESTRUTURA GENÉRICA! É FEITO A CONVERSÃO DA FUNÇÃO GENÉRICA PARA A FUNÇÃO ESPECÍFICA DA ÁRVORE.
 
-
-
-// FUNÇÕES GENÉRICAS =================|
 Resultados avl_obter_resultados() {
     Resultados res;
     res.custo_insercao = custo_insercao;
