@@ -12,10 +12,11 @@ E em seguida:
 gcc main.c avl.c rb.c arvb.c -o main.exe
 
 E em seguida:
-main.exe
+.\main.exe
 
 
 Caso o projeto utilize outros arquivos .c (outras estruturas), eles deverão ser adicionados ao comando gcc também
+
 
 
 
